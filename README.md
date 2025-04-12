@@ -9,7 +9,7 @@ Professional internet speed test tool for Termux with cool interface
 - Ping, download, and upload measurement
 - Automatic dependency installation
 - Colorful interface
-- Loading animations
+- Loading a little bit of spam
 - Easy to use
 
 ## 📥 Installation
