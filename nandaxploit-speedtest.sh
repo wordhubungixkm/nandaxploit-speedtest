@@ -1,27 +1,19 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Nama script: nandaXploit
-# Fungsi: Test kecepatan internet menggunakan speed-cli
+# nandaXploit - Internet Speed Test
 
-echo "==============================="
-echo "    nandaXploit NetSpeed Test"
-echo "==============================="
+echo "=== nandaXploit Speed Test ==="
 
-# Update & install python
-echo "[*] Updating package list..."
+echo "1. Update packages..."
 pkg update -y && pkg upgrade -y
 
-echo "[*] Installing Python..."
+echo "2. Install Python..."
 pkg install python -y
 
-echo "[*] Installing speed-cli..."
+echo "3. Install speed-cli..."
 pip install speed-cli
 
-echo ""
-echo "-------------------------------"
-echo "       Testing Speed..."
-echo "-------------------------------"
+echo "4. Tes kecepatan internet..."
 speed-cli
 
-echo ""
-echo "========= Test Selesai ========="
+echo "5. tes kecepatan dari nandaXploit Selesai."
