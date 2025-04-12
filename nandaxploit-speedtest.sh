@@ -3,30 +3,17 @@
 # nandaXploit - Internet Speed Test
 
 echo "=== nandaXploit Speed Test ==="
-sleep 1
 
-echo "Proses berjalan... (10%)"
-pkg update -y > /dev/null 2>&1
-sleep 1
+echo "1. Update packages..."
+pkg update -y && pkg upgrade -y
 
-echo "Proses berjalan... (30%)"
-pkg upgrade -y > /dev/null 2>&1
-sleep 1
+echo "2. Install Python..."
+pkg install python -y
 
-echo "Proses berjalan... (50%)"
-pkg install python -y > /dev/null 2>&1
-sleep 1
+echo "3. Install speed-cli..."
+pip install speed-cli
 
-echo "Proses berjalan... (70%)"
-pip install speed-cli > /dev/null 2>&1
-sleep 1
-
-echo "Proses berjalan... (90%)"
-sleep 1
-
-echo "Tes kecepatan internet dimulai..."
-sleep 1
+echo "4. Tes kecepatan internet..."
 speed-cli
 
-echo ""
-echo "Proses selesai. (100%)"
+echo "5. Selesai."
