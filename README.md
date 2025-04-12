@@ -15,6 +15,5 @@ Professional internet speed test tool for Termux with cool interface
 ## 📥 Installation
 ```bash
 git clone https://github.com/wordhubungixkm/nandaxploit-speedtest.git
-cd nandaxploit-speedtest
-chmod +x nandaxploit-speedtest
-./nandaxploit-speedtest
+chmod +x nandaXploit.sh
+./nandaXploit.sh
