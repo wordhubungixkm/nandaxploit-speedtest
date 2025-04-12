@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # NandaXploit SpeedTest Tool
-# Version: 1.1
-# GitHub: https://github.com/[yourusername]/nandaxploit-speedtest
+# Version: 2.0 (Fixed)
+# GitHub: https://github.com/wordhubungixkm/nandaxploit-speedtest
 
 # Colors
 RED='\033[1;31m'
@@ -13,34 +13,38 @@ CYAN='\033[1;36m'
 PURPLE='\033[1;35m'
 NC='\033[0m'
 
-# Check if running in Termux
+# Check Termux environment
 check_termux() {
-    if ! [ -d "/data/data/com.termux/files/usr" ]; then
+    if ! [ -x "$(command -v pkg)" ]; then
         echo -e "${RED}[!] Error: This script must be run in Termux${NC}"
         exit 1
     fi
 }
 
+# Show cool header
 show_header() {
     clear
     echo -e "${RED}"
-    echo "  _   _           _            __  ______  _       _ _ "
-    echo " | \ | |         | |          / _| | ___ \(_)     (_) |"
-    echo " |  \| | __ _  __| | ___  ___| |_  | |_/ / _ _ __ _| |_ "
-    echo " | . \ |/ _\` |/ _\` |/ _ \/ _ \  _| |  __/ | | '__| | __|"
-    echo " | |\  | (_| | (_| |  __/  __/ |   | |    | | |  | | |_ "
-    echo " \_| \_/\__,_|\__,_|\___|\___|_|   \_|    |_|_|  |_|\__|"
+    cat << "EOF"
+  _   _           _            __  ______  _       _ _ 
+ | \ | |         | |          / _| | ___ \(_)     (_) |
+ |  \| | __ _  __| | ___  ___| |_  | |_/ / _ _ __ _| |_ 
+ | . \ |/ _` |/ _` |/ _ \/ _ \  _| |  __/ | | '__| | __|
+ | |\  | (_| | (_| |  __/  __/ |   | |    | | |  | | |_ 
+ \_| \_/\__,_|\__,_|\___|\___|_|   \_|    |_|_|  |_|\__|
+EOF
     echo -e "${CYAN}"
     echo "         === Internet Speed Test Tool ==="
     echo -e "${NC}"
-    echo -e "${YELLOW}Version 1.1 | By NandaXploit${NC}"
+    echo -e "${YELLOW}Version 2.0 | Fixed Version | By NandaXploit${NC}"
     echo ""
 }
 
+# Animated spinner
 spinner() {
     local pid=$!
-    local delay=0.1
-    local spinstr='|/-\'
+    local delay=0.15
+    local spinstr='|/-\\'
     while [ "$(ps a | awk '{print $1}' | grep $pid)" ]; do
         local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
@@ -51,12 +55,15 @@ spinner() {
     printf "    \b\b\b\b"
 }
 
-install_dependencies() {
+# Install required packages
+install_deps() {
     echo -e "${YELLOW}[*] Checking dependencies...${NC}"
+    
+    # Update packages first
+    pkg update -y > /dev/null 2>&1
     
     if ! command -v python &> /dev/null; then
         echo -e "${CYAN}[+] Installing Python...${NC}"
-        pkg update -y > /dev/null 2>&1
         pkg install python -y > /dev/null 2>&1 || {
             echo -e "${RED}[!] Failed to install Python${NC}"
             exit 1
@@ -73,35 +80,36 @@ install_dependencies() {
     fi
 }
 
-run_speedtest() {
-    # Ping test
-    echo -ne "${CYAN}[+] Measuring ping to google.com...${NC}"
-    ping -c 3 google.com > /tmp/ping.txt 2>&1 &
-    spinner
+# Run the actual speed test
+run_test() {
+    echo -e "${YELLOW}[*] Starting speed test...${NC}"
+    echo ""
     
-    if [ $? -ne 0 ]; then
-        echo -e "\r${RED}[!] Ping test failed (no internet connection?)${NC}"
-        return 1
+    # Test internet connection first
+    echo -ne "${CYAN}[+] Checking internet connection...${NC}"
+    if ! ping -c 1 google.com &> /dev/null; then
+        echo -e "\r${RED}[!] No internet connection!${NC}"
+        exit 1
+    fi
+    echo -e "\r${CYAN}[+] Internet connection: ${GREEN}OK${NC}"
+    
+    # Run speedtest
+    echo -ne "${CYAN}[+] Measuring speeds (may take 30 seconds)...${NC}"
+    result=$(speedtest-cli --simple 2>&1) & spinner
+    
+    if [[ $? -ne 0 ]]; then
+        echo -e "\r${RED}[!] Speed test failed!${NC}"
+        echo -e "${YELLOW}[*] Error details:${NC}"
+        echo "$result"
+        exit 1
     fi
     
-    ping_result=$(grep "min/avg/max" /tmp/ping.txt | awk -F '/' '{print $5}' | cut -d '.' -f1)
-    echo -e "\r${CYAN}[+] Ping: ${YELLOW}${ping_result} ms${NC}"
+    # Parse results
+    download=$(echo "$result" | grep Download | awk '{printf "%.2f", $2}')
+    upload=$(echo "$result" | grep Upload | awk '{printf "%.2f", $2}')
+    ping=$(echo "$result" | grep Ping | awk '{printf "%.0f", $2}')
     
-    # Speedtest
-    echo -ne "${CYAN}[+] Measuring download/upload speed...${NC}"
-    speedtest-cli --simple > /tmp/speedtest.txt 2>&1 &
-    spinner
-    
-    if [ $? -ne 0 ]; then
-        echo -e "\r${RED}[!] Speedtest failed (server unavailable)${NC}"
-        return 1
-    fi
-    
-    download=$(grep "Download" /tmp/speedtest.txt | awk '{printf "%.2f", $2}')
-    upload=$(grep "Upload" /tmp/speedtest.txt | awk '{printf "%.2f", $2}')
-    ping=$(grep "Ping" /tmp/speedtest.txt | awk '{printf "%.0f", $2}')
-    
-    # Display results with proper formatting
+    # Display results
     echo -e "\n${PURPLE}╔════════════════════════════════════╗"
     echo -e "║          ${CYAN}NandaXploit Results${PURPLE}          ║"
     echo -e "╠════════════════════════════════════╣"
@@ -109,28 +117,18 @@ run_speedtest() {
     printf "║ ${CYAN}%-9s${NC}: ${YELLOW}%-18s${PURPLE} ║\n" "Upload" "${upload} Mbit/s"
     printf "║ ${CYAN}%-9s${NC}: ${YELLOW}%-18s${PURPLE} ║\n" "Ping" "${ping} ms"
     echo -e "╚════════════════════════════════════╝${NC}"
+    
+    echo -e "\n${GREEN}[✓] Speed test completed successfully!${NC}"
+    echo -e "${BLUE}GitHub: https://github.com/wordhubungixkm/nandaxploit-speedtest}"
 }
 
+# Main function
 main() {
     check_termux
     show_header
-    install_dependencies
-    
-    echo -e "${YELLOW}[*] Starting internet speed test...${NC}"
-    echo ""
-    
-    if ! run_speedtest; then
-        echo -e "\n${RED}[!] Speed test encountered errors${NC}"
-        echo -e "${YELLOW}[*] Please check your internet connection and try again${NC}"
-        exit 1
-    fi
-    
-    echo -e "\n${GREEN}[✓] Speed test completed successfully!${NC}"
-    echo -e "${BLUE}GitHub: https://github.com/wordhubungixkm/nandaxploit-speedtest${NC}"
-    echo ""
-    
-    # Clean up
-    rm -f /tmp/ping.txt /tmp/speedtest.txt 2>/dev/null
+    install_deps
+    run_test
 }
 
+# Start the script
 main
